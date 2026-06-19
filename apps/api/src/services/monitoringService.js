@@ -1,4 +1,5 @@
-import { Check, Incident, Service } from "../models/index.js";
+import { Check, Service } from "../models/index.js";
+import { ensureOpenIncidentForServiceFailure } from "./incidentService.js";
 
 function getStatusFromResult(ok, latencyMs, latencyThresholdMs = 1000) {
   if (!ok) return "down";
@@ -33,21 +34,11 @@ export async function runServiceCheck(service) {
     await Service.findByIdAndUpdate(service._id, { currentStatus });
 
     if (!ok) {
-      await Incident.findOneAndUpdate(
-        { teamId: service.teamId, serviceId: service._id, status: { $ne: "resolved" } },
-        {
-          $setOnInsert: {
-            teamId: service.teamId,
-            serviceId: service._id,
-            title: `${service.name} is failing checks`,
-            description: `Latest check returned HTTP ${response.status}.`,
-            severity: "high",
-            status: "open",
-            openedAt: new Date()
-          }
-        },
-        { upsert: true, new: true }
-      );
+      await ensureOpenIncidentForServiceFailure({
+        service,
+        title: `${service.name} is failing checks`,
+        description: `Latest check returned HTTP ${response.status}.`
+      });
     }
 
     return { check, currentStatus };
@@ -65,21 +56,11 @@ export async function runServiceCheck(service) {
     });
 
     await Service.findByIdAndUpdate(service._id, { currentStatus: "down" });
-    await Incident.findOneAndUpdate(
-      { teamId: service.teamId, serviceId: service._id, status: { $ne: "resolved" } },
-      {
-        $setOnInsert: {
-          teamId: service.teamId,
-          serviceId: service._id,
-          title: `${service.name} is unreachable`,
-          description: errorMessage,
-          severity: "high",
-          status: "open",
-          openedAt: new Date()
-        }
-      },
-      { upsert: true, new: true }
-    );
+    await ensureOpenIncidentForServiceFailure({
+      service,
+      title: `${service.name} is unreachable`,
+      description: errorMessage
+    });
 
     return { check, currentStatus: "down" };
   } finally {
