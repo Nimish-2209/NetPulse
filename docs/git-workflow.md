@@ -19,3 +19,8 @@ Examples:
 - `feat(auth): add JWT login flow`
 - `feat(worker): record uptime check results`
 - `docs: add API route plan`
+
+## Current History
+
+- `feat: build NetPulse MVP`
+- `feat: add demo seed data`

@@ -77,6 +77,29 @@ Optional worker:
 npm run dev:worker
 ```
 
+## Demo Data
+
+Seed a populated demo account:
+
+```bash
+npm run seed:demo
+```
+
+Demo login:
+
+```txt
+Email: demo@netpulse.local
+Password: password123
+```
+
+The seed creates:
+
+- Connectify Demo Team
+- three monitored services
+- latency/check history
+- open and acknowledged incidents
+- admin team membership for the demo user
+
 ## Tests
 
 Run the backend integration tests:
