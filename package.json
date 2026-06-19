@@ -1,0 +1,20 @@
+{
+  "name": "netpulse",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Network incident and uptime monitoring platform built with modern JavaScript.",
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
+  "scripts": {
+    "dev:web": "npm --workspace apps/web run dev",
+    "dev:api": "npm --workspace apps/api run dev",
+    "dev:worker": "npm --workspace apps/worker run dev",
+    "lint": "npm --workspaces --if-present run lint",
+    "test": "npm --workspaces --if-present run test"
+  },
+  "engines": {
+    "node": ">=20"
+  }
+}

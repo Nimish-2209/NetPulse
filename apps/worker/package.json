@@ -1,0 +1,17 @@
+{
+  "name": "@netpulse/worker",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "main": "src/index.js",
+  "scripts": {
+    "dev": "node src/index.js",
+    "start": "node src/index.js",
+    "test": "node --test"
+  },
+  "dependencies": {
+    "dotenv": "^16.4.0",
+    "mongoose": "^8.8.0",
+    "node-cron": "^3.0.3"
+  }
+}
