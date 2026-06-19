@@ -15,4 +15,3 @@ const serviceSchema = new mongoose.Schema({
 serviceSchema.index({ teamId: 1, name: 1 }, { unique: true });
 
 export const Service = mongoose.model("Service", serviceSchema);
-abcd

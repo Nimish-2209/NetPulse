@@ -7,5 +7,5 @@ const teamSchema = new mongoose.Schema({
 },
     { timestamps: true }
 );
-abcd
+
 export const Team = mongoose.model('Team', teamSchema);
