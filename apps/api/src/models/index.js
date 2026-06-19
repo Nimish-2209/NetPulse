@@ -5,3 +5,4 @@ export { Service } from "./Service.js";
 export { Check } from "./Check.js";
 export { Incident } from "./Incident.js";
 export { AlertRule } from "./AlertRule.js";
+export { Invitation } from "./Invitation.js";

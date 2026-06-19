@@ -1,8 +1,10 @@
 import express from "express";
 import {
   addTeamMember,
+  createInvitation,
   createTeam,
   getTeam,
+  listInvitations,
   listTeamMembers,
   listTeams,
   removeTeamMember,
@@ -23,5 +25,7 @@ router.get("/:teamId/members", requireTeamRole("admin"), asyncHandler(listTeamMe
 router.post("/:teamId/members", requireTeamRole("admin"), asyncHandler(addTeamMember));
 router.patch("/:teamId/members/:memberId", requireTeamRole("admin"), asyncHandler(updateTeamMember));
 router.delete("/:teamId/members/:memberId", requireTeamRole("admin"), asyncHandler(removeTeamMember));
+router.get("/:teamId/invitations", requireTeamRole("admin"), asyncHandler(listInvitations));
+router.post("/:teamId/invitations", requireTeamRole("admin"), asyncHandler(createInvitation));
 
 export default router;

@@ -1,3 +1,5 @@
+"use client";
+
 import ChecksPanel from "./ChecksPanel";
 import DashboardHeader from "./DashboardHeader";
 import DashboardSidebar from "./DashboardSidebar";
@@ -7,11 +9,26 @@ import ServicesPanel from "./ServicesPanel";
 import TeamMembersPanel from "./TeamMembersPanel";
 
 export default function DashboardView({ dashboard }) {
+  function selectSection(sectionId) {
+    const section = document.getElementById(sectionId);
+
+    if (!section) return;
+
+    section.scrollIntoView({ behavior: "smooth", block: "start" });
+    section.classList.remove("panel-highlight");
+
+    window.setTimeout(() => {
+      section.classList.add("panel-highlight");
+      window.setTimeout(() => section.classList.remove("panel-highlight"), 1200);
+    }, 150);
+  }
+
   return (
     <main className="dashboard-shell">
       <DashboardSidebar
         currentTeamId={dashboard.currentTeamId}
         isAdmin={dashboard.isAdmin}
+        onSectionSelect={selectSection}
         onSignOut={dashboard.signOut}
         setCurrentTeamId={dashboard.setCurrentTeamId}
         teams={dashboard.teams}
@@ -61,9 +78,10 @@ export default function DashboardView({ dashboard }) {
         {dashboard.isAdmin ? (
           <TeamMembersPanel
             busy={dashboard.busy}
+            invitations={dashboard.invitations}
             memberForm={dashboard.memberForm}
             members={dashboard.members}
-            onAddMember={dashboard.addMember}
+            onInviteMember={dashboard.inviteMember}
             onRemoveMember={dashboard.removeMember}
             onUpdateMemberRole={dashboard.updateMemberRole}
             setMemberForm={dashboard.setMemberForm}

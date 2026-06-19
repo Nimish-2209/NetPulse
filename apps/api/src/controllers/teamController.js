@@ -1,4 +1,5 @@
-import { Team, TeamMember, User } from "../models/index.js";
+import crypto from "node:crypto";
+import { Invitation, Team, TeamMember, User } from "../models/index.js";
 import { slugify } from "../utils/slugify.js";
 
 function serializeTeam(team, role) {
@@ -20,6 +21,18 @@ function serializeMember(member) {
       email: member.userId.email
     },
     joinedAt: member.createdAt
+  };
+}
+
+function serializeInvitation(invitation) {
+  return {
+    id: invitation._id,
+    email: invitation.email,
+    role: invitation.role,
+    token: invitation.token,
+    acceptedAt: invitation.acceptedAt,
+    expiresAt: invitation.expiresAt,
+    createdAt: invitation.createdAt
   };
 }
 
@@ -121,6 +134,77 @@ export async function addTeamMember(req, res) {
   await member.populate("userId", "name email");
 
   res.status(201).json({ member: serializeMember(member) });
+}
+
+export async function listInvitations(req, res) {
+  const invitations = await Invitation.find({
+    teamId: req.params.teamId,
+    acceptedAt: null,
+    expiresAt: { $gt: new Date() }
+  }).sort({ createdAt: -1 });
+
+  res.json({ invitations: invitations.map(serializeInvitation) });
+}
+
+export async function createInvitation(req, res) {
+  const { email, role = "viewer" } = req.body;
+
+  if (!email) {
+    return res.status(400).json({ message: "Email is required" });
+  }
+
+  if (!["admin", "maintainer", "viewer"].includes(role)) {
+    return res.status(400).json({ message: "Invalid role" });
+  }
+
+  const normalizedEmail = email.toLowerCase().trim();
+  const existingUser = await User.findOne({ email: normalizedEmail });
+
+  if (existingUser) {
+    const existingMember = await TeamMember.findOne({
+      userId: existingUser._id,
+      teamId: req.params.teamId
+    });
+
+    if (existingMember) {
+      return res.status(409).json({ message: "User is already on this team" });
+    }
+
+    const member = await TeamMember.create({
+      userId: existingUser._id,
+      teamId: req.params.teamId,
+      role
+    });
+
+    await member.populate("userId", "name email");
+
+    return res.status(201).json({
+      member: serializeMember(member),
+      message: "Existing user added to team"
+    });
+  }
+
+  const invitation = await Invitation.findOneAndUpdate(
+    {
+      teamId: req.params.teamId,
+      email: normalizedEmail,
+      acceptedAt: null
+    },
+    {
+      teamId: req.params.teamId,
+      email: normalizedEmail,
+      role,
+      token: crypto.randomBytes(16).toString("hex"),
+      invitedBy: req.user._id,
+      expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000)
+    },
+    { new: true, upsert: true, setDefaultsOnInsert: true }
+  );
+
+  return res.status(201).json({
+    invitation: serializeInvitation(invitation),
+    message: "Invitation created"
+  });
 }
 
 export async function updateTeamMember(req, res) {

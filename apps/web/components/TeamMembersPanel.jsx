@@ -1,8 +1,9 @@
 export default function TeamMembersPanel({
   busy,
+  invitations,
   memberForm,
   members,
-  onAddMember,
+  onInviteMember,
   onRemoveMember,
   onUpdateMemberRole,
   setMemberForm
@@ -14,7 +15,7 @@ export default function TeamMembersPanel({
         <span className="subtle">Admin only</span>
       </div>
 
-      <form className="inline-form member-form" onSubmit={onAddMember}>
+      <form className="inline-form member-form" onSubmit={onInviteMember}>
         <input
           type="email"
           value={memberForm.email}
@@ -31,9 +32,24 @@ export default function TeamMembersPanel({
           <option value="admin">Admin</option>
         </select>
         <button className="primary-button" disabled={busy} type="submit">
-          Add member
+          Invite member
         </button>
       </form>
+
+      {invitations.length ? (
+        <div className="invitation-list">
+          <h4>Pending invitations</h4>
+          {invitations.map((invitation) => (
+            <article className="invitation-row" key={invitation.id}>
+              <span>
+                <strong>{invitation.email}</strong>
+                <small>{invitation.role} invitation</small>
+              </span>
+              <code>{invitation.token}</code>
+            </article>
+          ))}
+        </div>
+      ) : null}
 
       <div className="member-list">
         {members.length ? (

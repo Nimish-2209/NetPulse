@@ -68,6 +68,8 @@ Returns the current user and team memberships.
 - `POST /api/teams/:teamId/members`
 - `PATCH /api/teams/:teamId/members/:memberId`
 - `DELETE /api/teams/:teamId/members/:memberId`
+- `GET /api/teams/:teamId/invitations`
+- `POST /api/teams/:teamId/invitations`
 
 Member management requires the `admin` role.
 
@@ -83,6 +85,32 @@ Body:
 ```
 
 The user must already have a NetPulse account.
+
+### `POST /api/teams/:teamId/invitations`
+
+Body:
+
+```json
+{
+  "email": "new-user@example.com",
+  "role": "viewer"
+}
+```
+
+If the email already belongs to a NetPulse user, the user is added to the team immediately. If the email is new, NetPulse returns an invitation code.
+
+Invited users register with:
+
+```json
+{
+  "name": "New User",
+  "email": "new-user@example.com",
+  "password": "password123",
+  "inviteToken": "returned-invite-code"
+}
+```
+
+Registering with an invite code joins the existing team directly and does not create a new admin workspace.
 
 ### `PATCH /api/teams/:teamId/members/:memberId`
 

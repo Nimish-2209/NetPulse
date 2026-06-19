@@ -77,6 +77,29 @@ Optional worker:
 npm run dev:worker
 ```
 
+## Demo Data
+
+Seed a populated demo account:
+
+```bash
+npm run seed:demo
+```
+
+Demo login:
+
+```txt
+Email: demo@netpulse.local
+Password: password123
+```
+
+The seed creates:
+
+- Connectify Demo Team
+- three monitored services
+- latency/check history
+- open and acknowledged incidents
+- admin team membership for the demo user
+
 ## Tests
 
 Run the backend integration tests:
@@ -94,6 +117,7 @@ The API test suite uses an isolated in-memory MongoDB and covers:
 - manual uptime checks
 - incident creation/resolution
 - admin/member/viewer permissions
+- invite-code registration without creating an extra admin workspace
 
 ## URLs
 
@@ -106,6 +130,7 @@ The API test suite uses an isolated in-memory MongoDB and covers:
 - Create an initial team during registration.
 - Use admin, maintainer, and viewer team roles.
 - Admins can add, remove, and change team member roles.
+- Admins can invite new users with a code so they join the existing team directly.
 - Load team-scoped services and incidents.
 - Add monitored services.
 - Run a manual uptime check.

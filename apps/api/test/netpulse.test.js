@@ -50,6 +50,32 @@ describe("NetPulse API", () => {
     assert.equal(response.body.service, "NetPulse API");
   });
 
+  it("checks public website uptime without authentication", async () => {
+    mock.method(globalThis, "fetch", async () => ({
+      status: 204,
+      url: "https://example.com/"
+    }));
+
+    const response = await request(app)
+      .post("/api/public/uptime-check")
+      .send({ url: "example.com" });
+
+    assert.equal(response.status, 200);
+    assert.equal(response.body.online, true);
+    assert.equal(response.body.status, "online");
+    assert.equal(response.body.statusCode, 204);
+    assert.equal(response.body.targetUrl, "https://example.com/");
+  });
+
+  it("blocks public uptime checks against local hosts", async () => {
+    const response = await request(app)
+      .post("/api/public/uptime-check")
+      .send({ url: "http://localhost:4000/api/health" });
+
+    assert.equal(response.status, 400);
+    assert.match(response.body.message, /local or private hosts/);
+  });
+
   it("registers a user, creates a team, and returns current session", async () => {
     const registration = await registerUser();
 
@@ -184,5 +210,43 @@ describe("NetPulse API", () => {
       .send({ name: "Forbidden API", url: "https://example.com" });
 
     assert.equal(writeService.status, 403);
+  });
+
+  it("lets invited users register directly into an existing team without creating an admin team", async () => {
+    const admin = await registerUser({
+      email: "admin@example.com",
+      name: "Admin",
+      teamName: "Ops Team"
+    });
+
+    const invite = await request(app)
+      .post(`/api/teams/${admin.team.id}/invitations`)
+      .set("Authorization", `Bearer ${admin.token}`)
+      .send({ email: "new-viewer@example.com", role: "viewer" });
+
+    assert.equal(invite.status, 201);
+    assert.ok(invite.body.invitation.token);
+
+    const invitedRegistration = await request(app)
+      .post("/api/auth/register")
+      .send({
+        name: "New Viewer",
+        email: "new-viewer@example.com",
+        password: "password123",
+        inviteToken: invite.body.invitation.token
+      });
+
+    assert.equal(invitedRegistration.status, 201);
+    assert.equal(invitedRegistration.body.team.id, admin.team.id);
+    assert.equal(invitedRegistration.body.team.role, "viewer");
+
+    const session = await request(app)
+      .get("/api/auth/me")
+      .set("Authorization", `Bearer ${invitedRegistration.body.token}`);
+
+    assert.equal(session.status, 200);
+    assert.equal(session.body.teams.length, 1);
+    assert.equal(session.body.teams[0].id, admin.team.id);
+    assert.equal(session.body.teams[0].role, "viewer");
   });
 });

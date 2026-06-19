@@ -44,7 +44,9 @@ export default function IncidentsPanel({
         <p className="permission-note">Viewer access is read-only for incidents.</p>
       )}
 
-      <IncidentTable canResolve={canMaintain} incidents={incidents} onResolve={onResolveIncident} />
+      <div className="incident-list">
+        <IncidentTable canResolve={canMaintain} incidents={incidents} onResolve={onResolveIncident} />
+      </div>
     </section>
   );
 }
