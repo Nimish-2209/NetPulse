@@ -1,86 +1,34 @@
-import { Incident, Service } from "../models/index.js";
+import {
+  createTeamIncident,
+  listTeamIncidents,
+  updateTeamIncident
+} from "../services/incidentService.js";
 import { emitToTeam } from "../sockets/statusSocket.js";
 
-function serializeIncident(incident) {
-  return {
-    id: incident._id,
-    teamId: incident.teamId,
-    serviceId: incident.serviceId,
-    title: incident.title,
-    description: incident.description,
-    severity: incident.severity,
-    status: incident.status,
-    assignedTo: incident.assignedTo,
-    openedAt: incident.openedAt,
-    resolvedAt: incident.resolvedAt,
-    createdAt: incident.createdAt,
-    updatedAt: incident.updatedAt
-  };
-}
-
 export async function listIncidents(req, res) {
-  const incidents = await Incident.find({ teamId: req.params.teamId }).sort({ openedAt: -1 });
-  res.json({ incidents: incidents.map(serializeIncident) });
+  const incidents = await listTeamIncidents(req.params.teamId);
+  res.json({ incidents });
 }
 
 export async function createIncident(req, res) {
-  const { serviceId, title, description, severity = "medium", assignedTo } = req.body;
-
-  if (!serviceId || !title) {
-    return res.status(400).json({ message: "Service and title are required" });
-  }
-
-  const service = await Service.findOne({ _id: serviceId, teamId: req.params.teamId });
-
-  if (!service) {
-    return res.status(404).json({ message: "Service not found" });
-  }
-
-  const incident = await Incident.create({
+  const incident = await createTeamIncident({
     teamId: req.params.teamId,
-    serviceId,
-    title,
-    description,
-    severity,
-    assignedTo
+    ...req.body
   });
 
-  const serializedIncident = serializeIncident(incident);
+  emitToTeam(req.params.teamId, "incident:created", { incident });
 
-  emitToTeam(req.params.teamId, "incident:created", { incident: serializedIncident });
-
-  res.status(201).json({ incident: serializedIncident });
+  res.status(201).json({ incident });
 }
 
 export async function updateIncident(req, res) {
-  const updates = {};
-  const allowedUpdates = ["title", "description", "severity", "status", "assignedTo"];
+  const incident = await updateTeamIncident({
+    teamId: req.params.teamId,
+    incidentId: req.params.incidentId,
+    body: req.body
+  });
 
-  for (const key of allowedUpdates) {
-    if (req.body[key] !== undefined) updates[key] = req.body[key];
-  }
+  emitToTeam(req.params.teamId, "incident:updated", { incident });
 
-  if (updates.status === "resolved") {
-    updates.resolvedAt = new Date();
-  }
-
-  if (updates.status && updates.status !== "resolved") {
-    updates.resolvedAt = null;
-  }
-
-  const incident = await Incident.findOneAndUpdate(
-    { _id: req.params.incidentId, teamId: req.params.teamId },
-    updates,
-    { new: true, runValidators: true }
-  );
-
-  if (!incident) {
-    return res.status(404).json({ message: "Incident not found" });
-  }
-
-  const serializedIncident = serializeIncident(incident);
-
-  emitToTeam(req.params.teamId, "incident:updated", { incident: serializedIncident });
-
-  res.json({ incident: serializedIncident });
+  res.json({ incident });
 }
