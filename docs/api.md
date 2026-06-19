@@ -30,7 +30,7 @@ Body:
   "name": "Nimish",
   "email": "nimish@example.com",
   "password": "password123",
-  "teamName": "Connectify Demo Team"
+  "teamName": "Demo Team"
 }
 ```
 
@@ -64,6 +64,7 @@ Returns the current user and team memberships.
 - `GET /api/teams`
 - `POST /api/teams`
 - `GET /api/teams/:teamId`
+- `GET /api/teams/:teamId/metrics`
 - `GET /api/teams/:teamId/members`
 - `POST /api/teams/:teamId/members`
 - `PATCH /api/teams/:teamId/members/:memberId`
@@ -71,7 +72,24 @@ Returns the current user and team memberships.
 - `GET /api/teams/:teamId/invitations`
 - `POST /api/teams/:teamId/invitations`
 
-Member management requires the `admin` role.
+Reading team members requires team access. Member mutations and invitation management require the `admin` role.
+
+### `GET /api/teams/:teamId/metrics`
+
+Returns 24-hour uptime metrics based on stored checks.
+
+Response:
+
+```json
+{
+  "metrics": {
+    "uptimeWindowHours": 24,
+    "totalChecks": 42,
+    "successfulChecks": 41,
+    "uptimePercentage": 97.6
+  }
+}
+```
 
 ### `POST /api/teams/:teamId/members`
 
@@ -161,6 +179,7 @@ Returns the 100 most recent checks for a service.
 - `GET /api/teams/:teamId/incidents`
 - `POST /api/teams/:teamId/incidents`
 - `PATCH /api/teams/:teamId/incidents/:incidentId`
+- `POST /api/teams/:teamId/incidents/:incidentId/timeline`
 
 ### `POST /api/teams/:teamId/incidents`
 
@@ -171,7 +190,8 @@ Body:
   "serviceId": "serviceObjectId",
   "title": "Investigate latency spike",
   "severity": "medium",
-  "description": "Latency crossed threshold."
+  "description": "Latency crossed threshold.",
+  "assignedTo": "userObjectId"
 }
 ```
 
@@ -184,6 +204,30 @@ Body:
   "status": "resolved"
 }
 ```
+
+Incidents can also be assigned or unassigned with the same endpoint:
+
+```json
+{
+  "assignedTo": "userObjectId"
+}
+```
+
+The assigned user must be a member of the same team.
+
+### `POST /api/teams/:teamId/incidents/:incidentId/timeline`
+
+Adds a timeline note to an incident.
+
+Body:
+
+```json
+{
+  "message": "Paged the owner and started investigation."
+}
+```
+
+Timeline entries are also created automatically when incidents are created, assigned, unassigned, acknowledged, or resolved.
 
 ## Realtime Events
 

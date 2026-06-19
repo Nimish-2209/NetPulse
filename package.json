@@ -11,9 +11,7 @@
     "dev:web": "npm --workspace apps/web run dev",
     "dev:api": "npm --workspace apps/api run dev",
     "dev:worker": "npm --workspace apps/worker run dev",
-    "seed:demo": "npm --workspace apps/api run seed:demo",
-    "lint": "npm --workspaces --if-present run lint",
-    "test": "npm --workspaces --if-present run test"
+    "lint": "npm --workspaces --if-present run lint"
   },
   "engines": {
     "node": ">=20"

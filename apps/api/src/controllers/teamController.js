@@ -1,5 +1,5 @@
 import crypto from "node:crypto";
-import { Invitation, Team, TeamMember, User } from "../models/index.js";
+import { Check, Invitation, Team, TeamMember, User } from "../models/index.js";
 import { slugify } from "../utils/slugify.js";
 
 function serializeTeam(team, role) {
@@ -89,6 +89,27 @@ export async function getTeam(req, res) {
   }
 
   res.json({ team: serializeTeam(team, req.teamMember.role) });
+}
+
+export async function getTeamMetrics(req, res) {
+  const since = new Date(Date.now() - 24 * 60 * 60 * 1000);
+  const query = { teamId: req.params.teamId, checkedAt: { $gte: since } };
+  const [totalChecks, successfulChecks] = await Promise.all([
+    Check.countDocuments(query),
+    Check.countDocuments({ ...query, status: "success" })
+  ]);
+  const uptimePercentage = totalChecks
+    ? Number(((successfulChecks / totalChecks) * 100).toFixed(1))
+    : null;
+
+  res.json({
+    metrics: {
+      uptimeWindowHours: 24,
+      totalChecks,
+      successfulChecks,
+      uptimePercentage
+    }
+  });
 }
 
 export async function listTeamMembers(req, res) {

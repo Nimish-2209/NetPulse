@@ -42,8 +42,17 @@
 - `teamId`
 - `serviceId`
 - `title`
+- `description`
 - `severity`
 - `status`
 - `assignedTo`
 - `openedAt`
 - `resolvedAt`
+- `timeline`
+
+## Incident Timeline Entry
+
+- `type`: `created`, `updated`, `assigned`, `unassigned`, `acknowledged`, `resolved`, or `comment`
+- `message`
+- `actorId`
+- `createdAt`

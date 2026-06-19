@@ -1,4 +1,5 @@
 import {
+  addTeamIncidentTimelineEntry,
   createTeamIncident,
   listTeamIncidents,
   updateTeamIncident
@@ -13,6 +14,7 @@ export async function listIncidents(req, res) {
 export async function createIncident(req, res) {
   const incident = await createTeamIncident({
     teamId: req.params.teamId,
+    actorId: req.user._id,
     ...req.body
   });
 
@@ -25,10 +27,24 @@ export async function updateIncident(req, res) {
   const incident = await updateTeamIncident({
     teamId: req.params.teamId,
     incidentId: req.params.incidentId,
-    body: req.body
+    body: req.body,
+    actorId: req.user._id
   });
 
   emitToTeam(req.params.teamId, "incident:updated", { incident });
 
   res.json({ incident });
+}
+
+export async function addTimelineEntry(req, res) {
+  const incident = await addTeamIncidentTimelineEntry({
+    teamId: req.params.teamId,
+    incidentId: req.params.incidentId,
+    message: req.body.message,
+    actorId: req.user._id
+  });
+
+  emitToTeam(req.params.teamId, "incident:updated", { incident });
+
+  res.status(201).json({ incident });
 }

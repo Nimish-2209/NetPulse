@@ -13,12 +13,13 @@ The project is organized as a JavaScript monorepo with a Next.js frontend, Expre
 - Invite-code onboarding so new users can join an existing team directly.
 - CRUD APIs for services, incidents, team members, and invitations.
 - Manual uptime checks with latency and HTTP status capture.
+- 24-hour uptime percentage from stored check history.
 - Background worker for scheduled service checks.
 - Automatic incident creation when checks fail.
+- Incident assignment and timeline notes for operations handoff.
 - Realtime service, check, and incident updates with Socket.IO.
 - Recent latency history for monitored services.
 - MongoDB/Mongoose data model with team-owned records.
-- Backend integration tests using an isolated in-memory MongoDB.
 
 ## Tech Stack
 
@@ -27,7 +28,6 @@ The project is organized as a JavaScript monorepo with a Next.js frontend, Expre
 - **Database:** MongoDB, Mongoose
 - **Auth:** JWT, bcrypt password hashing
 - **Worker:** Node.js background process
-- **Testing:** Node test runner, Supertest, mongodb-memory-server
 
 ## Repository Layout
 
@@ -60,12 +60,14 @@ The API is organized around team-owned resources:
 - `POST /api/auth/login`
 - `GET /api/auth/me`
 - `POST /api/public/uptime-check`
+- `GET /api/teams/:teamId/metrics`
 - `GET /api/teams/:teamId/services`
 - `POST /api/teams/:teamId/services`
 - `POST /api/teams/:teamId/services/:serviceId/checks/run`
 - `GET /api/teams/:teamId/incidents`
 - `POST /api/teams/:teamId/incidents`
 - `PATCH /api/teams/:teamId/incidents/:incidentId`
+- `POST /api/teams/:teamId/incidents/:incidentId/timeline`
 - `GET /api/teams/:teamId/members`
 - `POST /api/teams/:teamId/invitations`
 
@@ -164,43 +166,7 @@ npm run dev:worker
 
 The worker scans stored services and runs scheduled checks.
 
-## Demo Data
-
-Seed a populated sample workspace:
-
-```bash
-npm run seed:demo
-```
-
-Sample login:
-
-```txt
-Email: demo@netpulse.local
-Password: password123
-```
-
-The seed creates a demo user, team, monitored services, check history, and sample incidents.
-
-## Testing
-
-Run the API integration tests:
-
-```bash
-npm --workspace apps/api run test
-```
-
-The test suite covers:
-
-- API health
-- public uptime checks
-- user registration and login
-- session loading
-- service creation
-- manual uptime checks
-- check history
-- incident creation and resolution
-- admin, maintainer, and viewer authorization
-- invite-code registration into an existing team
+## Build Check
 
 Build the web app:
 
@@ -233,7 +199,7 @@ npm --workspace apps/web run build
 3. NetPulse records manual and scheduled checks.
 4. Service status updates based on check results.
 5. Failed checks can open incidents automatically.
-6. Team members create, update, and resolve incidents.
+6. Team members assign, update, annotate, and resolve incidents.
 7. The dashboard receives realtime updates as service and incident state changes.
 
 ## Documentation
@@ -246,7 +212,6 @@ npm --workspace apps/web run build
 ## Roadmap
 
 - Public status pages for teams.
-- Incident timelines and comments.
 - Alert delivery through email or Slack webhooks.
 - Service groups for environments such as production and staging.
 - Uptime percentages over selectable time windows.
@@ -254,4 +219,4 @@ npm --workspace apps/web run build
 
 ## License
 
-This project is currently private and intended for development and demonstration use.
+This project is currently private and intended for development use.

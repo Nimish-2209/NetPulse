@@ -23,12 +23,20 @@ const emptyServiceForm = {
 const emptyIncidentForm = {
   title: "",
   severity: "medium",
-  description: ""
+  description: "",
+  assignedTo: ""
 };
 
 const emptyMemberForm = {
   email: "",
   role: "viewer"
+};
+
+const emptyTeamMetrics = {
+  uptimePercentage: null,
+  uptimeWindowHours: 24,
+  totalChecks: 0,
+  successfulChecks: 0
 };
 
 function upsertById(items, nextItem) {
@@ -53,6 +61,7 @@ export function useNetPulseDashboard() {
   const [incidents, setIncidents] = useState([]);
   const [checks, setChecks] = useState([]);
   const [members, setMembers] = useState([]);
+  const [teamMetrics, setTeamMetrics] = useState(emptyTeamMetrics);
   const [invitations, setInvitations] = useState([]);
   const [selectedServiceId, setSelectedServiceId] = useState("");
   const [serviceForm, setServiceForm] = useState(emptyServiceForm);
@@ -81,9 +90,12 @@ export function useNetPulseDashboard() {
       total: services.length,
       down: services.filter((service) => service.currentStatus === "down").length,
       degraded: services.filter((service) => service.currentStatus === "degraded").length,
-      openIncidents: incidents.filter((incident) => incident.status !== "resolved").length
+      openIncidents: incidents.filter((incident) => incident.status !== "resolved").length,
+      uptimePercentage: teamMetrics.uptimePercentage,
+      uptimeWindowHours: teamMetrics.uptimeWindowHours,
+      totalChecks: teamMetrics.totalChecks
     }),
-    [incidents, services]
+    [incidents, services, teamMetrics]
   );
 
   useEffect(() => {
@@ -91,7 +103,7 @@ export function useNetPulseDashboard() {
 
     if (storedAuth?.token) {
       setAuth(storedAuth);
-      loadSession(storedAuth.token);
+      loadSession(storedAuth.token).catch(handleRequestError);
     }
   }, []);
 
@@ -101,22 +113,28 @@ export function useNetPulseDashboard() {
 
   useEffect(() => {
     if (token && currentTeamId) {
-      loadTeamData(currentTeamId);
+      loadTeamData(currentTeamId).catch(handleRequestError);
     }
   }, [token, currentTeamId]);
 
   useEffect(() => {
     if (token && currentTeamId && selectedServiceId) {
-      loadChecks(selectedServiceId);
+      loadChecks(selectedServiceId).catch(handleRequestError);
     }
   }, [token, currentTeamId, selectedServiceId]);
 
   useEffect(() => {
-    if (token && currentTeamId && isAdmin) {
-      loadMembers(currentTeamId);
-      loadInvitations(currentTeamId);
+    if (token && currentTeamId) {
+      loadMembers(currentTeamId).catch(handleRequestError);
     } else {
       setMembers([]);
+    }
+  }, [token, currentTeamId]);
+
+  useEffect(() => {
+    if (token && currentTeamId && isAdmin) {
+      loadInvitations(currentTeamId).catch(handleRequestError);
+    } else {
       setInvitations([]);
     }
   }, [token, currentTeamId, isAdmin]);
@@ -183,13 +201,15 @@ export function useNetPulseDashboard() {
   }
 
   async function loadTeamData(teamId) {
-    const [serviceData, incidentData] = await Promise.all([
+    const [serviceData, incidentData, metricsData] = await Promise.all([
       apiRequest(`/teams/${teamId}/services`, { token }),
-      apiRequest(`/teams/${teamId}/incidents`, { token })
+      apiRequest(`/teams/${teamId}/incidents`, { token }),
+      apiRequest(`/teams/${teamId}/metrics`, { token })
     ]);
 
     setServices(serviceData.services);
     setIncidents(incidentData.incidents);
+    setTeamMetrics(metricsData.metrics || emptyTeamMetrics);
     setSelectedServiceId((currentId) => currentId || serviceData.services[0]?.id || "");
   }
 
@@ -206,6 +226,37 @@ export function useNetPulseDashboard() {
   async function loadInvitations(teamId) {
     const data = await apiRequest(`/teams/${teamId}/invitations`, { token });
     setInvitations(data.invitations);
+  }
+
+  function isSessionError(error) {
+    return ["Invalid token", "User no longer exists", "Authentication required"].includes(error?.message);
+  }
+
+  function resetSession(nextMessage = "") {
+    clearStoredAuth();
+    setAuth(null);
+    setTeams([]);
+    setCurrentTeamId("");
+    setServices([]);
+    setIncidents([]);
+    setChecks([]);
+    setMembers([]);
+    setTeamMetrics(emptyTeamMetrics);
+    setInvitations([]);
+    setSelectedServiceId("");
+    setAuthMode("login");
+    setRegisterMode("createTeam");
+    setSocketState("offline");
+    setMessage(nextMessage);
+  }
+
+  function handleRequestError(error) {
+    if (isSessionError(error)) {
+      resetSession("Session reset. Please log in again.");
+      return;
+    }
+
+    setMessage(error.message || "Request failed.");
   }
 
   async function submitAuth(event) {
@@ -238,7 +289,7 @@ export function useNetPulseDashboard() {
       setRegisterMode("createTeam");
       setMessage(authMode === "register" ? "Account created." : "Signed in.");
     } catch (error) {
-      setMessage(error.message);
+      handleRequestError(error);
     } finally {
       setBusy(false);
     }
@@ -271,7 +322,7 @@ export function useNetPulseDashboard() {
       setServiceForm(emptyServiceForm);
       setMessage("Service added.");
     } catch (error) {
-      setMessage(error.message);
+      handleRequestError(error);
     } finally {
       setBusy(false);
     }
@@ -299,7 +350,7 @@ export function useNetPulseDashboard() {
       await Promise.all([loadChecks(data.service.id), loadTeamData(currentTeamId)]);
       setMessage("Check recorded.");
     } catch (error) {
-      setMessage(error.message);
+      handleRequestError(error);
     } finally {
       setBusy(false);
     }
@@ -327,7 +378,8 @@ export function useNetPulseDashboard() {
         token,
         body: {
           ...incidentForm,
-          serviceId: selectedServiceId
+          serviceId: selectedServiceId,
+          assignedTo: incidentForm.assignedTo || undefined
         }
       });
 
@@ -335,15 +387,27 @@ export function useNetPulseDashboard() {
       setIncidentForm(emptyIncidentForm);
       setMessage("Incident created.");
     } catch (error) {
-      setMessage(error.message);
+      handleRequestError(error);
     } finally {
       setBusy(false);
     }
   }
 
   async function resolveIncident(incident) {
+    return updateIncident(incident, { status: "resolved" }, "Incident resolved.");
+  }
+
+  async function assignIncident(incident, assignedTo) {
+    return updateIncident(
+      incident,
+      { assignedTo: assignedTo || null },
+      assignedTo ? "Incident assigned." : "Incident unassigned."
+    );
+  }
+
+  async function updateIncident(incident, body, successMessage) {
     if (!canMaintain) {
-      setMessage("Your role can view incidents but cannot resolve them.");
+      setMessage("Your role can view incidents but cannot update them.");
       return;
     }
 
@@ -354,15 +418,42 @@ export function useNetPulseDashboard() {
       const data = await apiRequest(`/teams/${currentTeamId}/incidents/${incident.id}`, {
         method: "PATCH",
         token,
-        body: { status: "resolved" }
+        body
       });
 
       setIncidents((currentIncidents) =>
         currentIncidents.map((item) => (item.id === data.incident.id ? data.incident : item))
       );
-      setMessage("Incident resolved.");
+      setMessage(successMessage);
     } catch (error) {
-      setMessage(error.message);
+      handleRequestError(error);
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  async function addIncidentTimelineEntry(incident, timelineMessage) {
+    if (!canMaintain) {
+      setMessage("Your role can view incident timelines but cannot add notes.");
+      return;
+    }
+
+    setBusy(true);
+    setMessage("");
+
+    try {
+      const data = await apiRequest(`/teams/${currentTeamId}/incidents/${incident.id}/timeline`, {
+        method: "POST",
+        token,
+        body: { message: timelineMessage }
+      });
+
+      setIncidents((currentIncidents) =>
+        currentIncidents.map((item) => (item.id === data.incident.id ? data.incident : item))
+      );
+      setMessage("Timeline note added.");
+    } catch (error) {
+      handleRequestError(error);
     } finally {
       setBusy(false);
     }
@@ -398,7 +489,7 @@ export function useNetPulseDashboard() {
 
       setMemberForm(emptyMemberForm);
     } catch (error) {
-      setMessage(error.message);
+      handleRequestError(error);
     } finally {
       setBusy(false);
     }
@@ -418,7 +509,7 @@ export function useNetPulseDashboard() {
       setMembers((currentMembers) => upsertById(currentMembers, data.member));
       setMessage("Role updated.");
     } catch (error) {
-      setMessage(error.message);
+      handleRequestError(error);
     } finally {
       setBusy(false);
     }
@@ -437,29 +528,22 @@ export function useNetPulseDashboard() {
       setMembers((currentMembers) => currentMembers.filter((item) => item.id !== member.id));
       setMessage("Team member removed.");
     } catch (error) {
-      setMessage(error.message);
+      handleRequestError(error);
     } finally {
       setBusy(false);
     }
   }
 
   function signOut() {
-    clearStoredAuth();
-    setAuth(null);
-    setTeams([]);
-    setCurrentTeamId("");
-    setServices([]);
-    setIncidents([]);
-    setChecks([]);
-    setInvitations([]);
-    setSelectedServiceId("");
-    setMessage("");
+    resetSession("");
   }
 
   return {
     auth,
     authForm,
     authMode,
+    addIncidentTimelineEntry,
+    assignIncident,
     busy,
     canMaintain,
     chartChecks,
@@ -495,6 +579,7 @@ export function useNetPulseDashboard() {
     socketState,
     submitAuth,
     summary,
+    teamMetrics,
     teams,
     updateMemberRole,
     registerMode,

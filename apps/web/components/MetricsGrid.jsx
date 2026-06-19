@@ -1,4 +1,9 @@
 export default function MetricsGrid({ currentRole, summary }) {
+  const uptimeLabel =
+    summary.uptimePercentage === null || summary.uptimePercentage === undefined
+      ? "No checks"
+      : `${summary.uptimePercentage}%`;
+
   return (
     <section className="metrics-grid">
       <article>
@@ -16,6 +21,11 @@ export default function MetricsGrid({ currentRole, summary }) {
       <article>
         <span>Open incidents</span>
         <strong>{summary.openIncidents}</strong>
+      </article>
+      <article>
+        <span>Uptime {summary.uptimeWindowHours}h</span>
+        <strong>{uptimeLabel}</strong>
+        <small>{summary.totalChecks ? `${summary.totalChecks} checks` : "No check history"}</small>
       </article>
       <article>
         <span>Your role</span>

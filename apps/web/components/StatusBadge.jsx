@@ -11,7 +11,12 @@ const LABELS = {
   high: "High",
   critical: "Critical",
   success: "Success",
-  failure: "Failure"
+  failure: "Failure",
+  created: "Created",
+  updated: "Updated",
+  assigned: "Assigned",
+  unassigned: "Unassigned",
+  comment: "Note"
 };
 
 export default function StatusBadge({ value }) {

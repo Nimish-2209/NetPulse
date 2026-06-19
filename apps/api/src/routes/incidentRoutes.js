@@ -1,5 +1,6 @@
 import express from "express";
 import {
+  addTimelineEntry,
   createIncident,
   listIncidents,
   updateIncident
@@ -16,5 +17,6 @@ router.use(requireTeamRole("viewer"));
 router.get("/", asyncHandler(listIncidents));
 router.post("/", requireTeamRole("maintainer"), asyncHandler(createIncident));
 router.patch("/:incidentId", requireTeamRole("maintainer"), asyncHandler(updateIncident));
+router.post("/:incidentId/timeline", requireTeamRole("maintainer"), asyncHandler(addTimelineEntry));
 
 export default router;

@@ -4,7 +4,7 @@ Use small, readable commits that match project milestones.
 
 ## Suggested Branches
 
-- `main`: stable demo-ready code.
+- `main`: stable application code.
 - `feature/auth`: authentication and team membership.
 - `feature/services`: monitored service CRUD.
 - `feature/worker`: uptime check worker.
@@ -23,4 +23,3 @@ Examples:
 ## Current History
 
 - `feat: build NetPulse MVP`
-- `feat: add demo seed data`

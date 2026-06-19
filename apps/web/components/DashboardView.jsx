@@ -39,6 +39,7 @@ export default function DashboardView({ dashboard }) {
           currentTeam={dashboard.currentTeam}
           message={dashboard.message}
           socketState={dashboard.socketState}
+          user={dashboard.auth?.user}
         />
 
         <MetricsGrid currentRole={dashboard.currentRole} summary={dashboard.summary} />
@@ -61,6 +62,9 @@ export default function DashboardView({ dashboard }) {
             canMaintain={dashboard.canMaintain}
             incidentForm={dashboard.incidentForm}
             incidents={dashboard.incidents}
+            members={dashboard.members}
+            onAddTimelineEntry={dashboard.addIncidentTimelineEntry}
+            onAssignIncident={dashboard.assignIncident}
             onCreateIncident={dashboard.createIncident}
             onResolveIncident={dashboard.resolveIncident}
             selectedService={dashboard.selectedService}

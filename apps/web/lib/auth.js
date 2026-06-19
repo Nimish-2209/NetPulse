@@ -4,7 +4,15 @@ export function getStoredAuth() {
   if (typeof window === "undefined") return null;
 
   const value = window.localStorage.getItem(AUTH_STORAGE_KEY);
-  return value ? JSON.parse(value) : null;
+
+  if (!value) return null;
+
+  try {
+    return JSON.parse(value);
+  } catch {
+    window.localStorage.removeItem(AUTH_STORAGE_KEY);
+    return null;
+  }
 }
 
 export function saveStoredAuth(auth) {

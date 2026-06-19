@@ -3,6 +3,7 @@ import {
   addTeamMember,
   createInvitation,
   createTeam,
+  getTeamMetrics,
   getTeam,
   listInvitations,
   listTeamMembers,
@@ -21,7 +22,8 @@ router.use(requireAuth);
 router.get("/", asyncHandler(listTeams));
 router.post("/", asyncHandler(createTeam));
 router.get("/:teamId", requireTeamRole("viewer"), asyncHandler(getTeam));
-router.get("/:teamId/members", requireTeamRole("admin"), asyncHandler(listTeamMembers));
+router.get("/:teamId/metrics", requireTeamRole("viewer"), asyncHandler(getTeamMetrics));
+router.get("/:teamId/members", requireTeamRole("viewer"), asyncHandler(listTeamMembers));
 router.post("/:teamId/members", requireTeamRole("admin"), asyncHandler(addTeamMember));
 router.patch("/:teamId/members/:memberId", requireTeamRole("admin"), asyncHandler(updateTeamMember));
 router.delete("/:teamId/members/:memberId", requireTeamRole("admin"), asyncHandler(removeTeamMember));

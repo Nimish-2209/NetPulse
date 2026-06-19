@@ -302,6 +302,10 @@ a {
   letter-spacing: 0;
 }
 
+.topbar h2 {
+  color: var(--muted);
+}
+
 .eyebrow {
   margin: 0 0 6px;
   color: var(--primary);
@@ -474,6 +478,13 @@ select:focus {
   margin: 0;
 }
 
+.user-greeting {
+  margin: 0 0 6px;
+  color: var(--ink);
+  font-size: 28px;
+  font-weight: 700;
+}
+
 .realtime-pill {
   display: inline-flex;
   align-items: center;
@@ -504,7 +515,7 @@ select:focus {
 
 .metrics-grid {
   display: grid;
-  grid-template-columns: repeat(5, minmax(0, 1fr));
+  grid-template-columns: repeat(6, minmax(0, 1fr));
   gap: 12px;
 }
 
@@ -583,7 +594,7 @@ small {
 }
 
 .incident-form {
-  grid-template-columns: 1fr 150px auto;
+  grid-template-columns: minmax(0, 1fr) 140px 160px auto;
 }
 
 .member-form {
@@ -672,6 +683,52 @@ small {
   background: var(--panel);
 }
 
+.compact-select {
+  min-height: 34px;
+  min-width: 150px;
+  padding: 0 8px;
+}
+
+.incident-details-row td {
+  padding-top: 0;
+}
+
+.timeline-list {
+  display: grid;
+  gap: 8px;
+  border-left: 3px solid #edf1f7;
+  margin-left: 6px;
+  padding: 10px 0 10px 12px;
+}
+
+.timeline-event {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  background: #f9fafc;
+  padding: 10px;
+}
+
+.timeline-event span {
+  display: grid;
+  gap: 4px;
+  min-width: 0;
+}
+
+.timeline-event strong,
+.timeline-event small {
+  overflow-wrap: anywhere;
+}
+
+.timeline-form {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 8px;
+}
+
 table {
   width: 100%;
   border-collapse: collapse;
@@ -717,14 +774,17 @@ td small {
 .status-operational,
 .status-success,
 .status-resolved,
-.status-low {
+.status-low,
+.status-created {
   background: #e7f6ee;
   color: var(--green);
 }
 
 .status-degraded,
 .status-acknowledged,
-.status-medium {
+.status-medium,
+.status-assigned,
+.status-comment {
   background: #fff4df;
   color: var(--amber);
 }
@@ -733,7 +793,8 @@ td small {
 .status-failure,
 .status-open,
 .status-high,
-.status-critical {
+.status-critical,
+.status-unassigned {
   background: #fdeceb;
   color: var(--red);
 }
@@ -929,6 +990,7 @@ td small {
   .metrics-grid,
   .inline-form,
   .incident-form,
+  .timeline-form,
   .member-form,
   .invitation-row,
   .member-row,

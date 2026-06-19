@@ -6,6 +6,9 @@ export default function IncidentsPanel({
   canMaintain,
   incidentForm,
   incidents,
+  members,
+  onAddTimelineEntry,
+  onAssignIncident,
   onCreateIncident,
   onResolveIncident,
   selectedService,
@@ -36,6 +39,17 @@ export default function IncidentsPanel({
             <option value="high">High</option>
             <option value="critical">Critical</option>
           </select>
+          <select
+            value={incidentForm.assignedTo}
+            onChange={(event) => setIncidentForm({ ...incidentForm, assignedTo: event.target.value })}
+          >
+            <option value="">Unassigned</option>
+            {members.map((member) => (
+              <option key={member.user.id} value={member.user.id}>
+                {member.user.name}
+              </option>
+            ))}
+          </select>
           <button className="primary-button" disabled={busy || !selectedServiceId} type="submit">
             Create
           </button>
@@ -45,7 +59,14 @@ export default function IncidentsPanel({
       )}
 
       <div className="incident-list">
-        <IncidentTable canResolve={canMaintain} incidents={incidents} onResolve={onResolveIncident} />
+        <IncidentTable
+          canMaintain={canMaintain}
+          incidents={incidents}
+          members={members}
+          onAddTimelineEntry={onAddTimelineEntry}
+          onAssign={onAssignIncident}
+          onResolve={onResolveIncident}
+        />
       </div>
     </section>
   );
