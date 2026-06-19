@@ -50,6 +50,32 @@ describe("NetPulse API", () => {
     assert.equal(response.body.service, "NetPulse API");
   });
 
+  it("checks public website uptime without authentication", async () => {
+    mock.method(globalThis, "fetch", async () => ({
+      status: 204,
+      url: "https://example.com/"
+    }));
+
+    const response = await request(app)
+      .post("/api/public/uptime-check")
+      .send({ url: "example.com" });
+
+    assert.equal(response.status, 200);
+    assert.equal(response.body.online, true);
+    assert.equal(response.body.status, "online");
+    assert.equal(response.body.statusCode, 204);
+    assert.equal(response.body.targetUrl, "https://example.com/");
+  });
+
+  it("blocks public uptime checks against local hosts", async () => {
+    const response = await request(app)
+      .post("/api/public/uptime-check")
+      .send({ url: "http://localhost:4000/api/health" });
+
+    assert.equal(response.status, 400);
+    assert.match(response.body.message, /local or private hosts/);
+  });
+
   it("registers a user, creates a team, and returns current session", async () => {
     const registration = await registerUser();
 

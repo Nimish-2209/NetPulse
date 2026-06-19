@@ -5,6 +5,7 @@ import { errorHandler, notFound } from "./middleware/errorHandler.js";
 import authRoutes from "./routes/authRoutes.js";
 import checkRoutes from "./routes/checkRoutes.js";
 import incidentRoutes from "./routes/incidentRoutes.js";
+import publicRoutes from "./routes/publicRoutes.js";
 import serviceRoutes from "./routes/serviceRoutes.js";
 import teamRoutes from "./routes/teamRoutes.js";
 import "./models/index.js";
@@ -52,6 +53,7 @@ export function createApp() {
   });
 
   app.use("/api/auth", authRoutes);
+  app.use("/api/public", publicRoutes);
   app.use("/api/teams", teamRoutes);
   app.use("/api/teams/:teamId/services", serviceRoutes);
   app.use("/api/teams/:teamId/services/:serviceId/checks", checkRoutes);
