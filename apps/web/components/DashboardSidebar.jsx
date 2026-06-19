@@ -1,6 +1,7 @@
 export default function DashboardSidebar({
   currentTeamId,
   isAdmin,
+  onSectionSelect,
   onSignOut,
   setCurrentTeamId,
   teams
@@ -24,10 +25,20 @@ export default function DashboardSidebar({
       </label>
 
       <nav>
-        <a href="#services">Services</a>
-        <a href="#incidents">Incidents</a>
-        <a href="#checks">Checks</a>
-        {isAdmin ? <a href="#team">Team</a> : null}
+        <button type="button" onClick={() => onSectionSelect("services")}>
+          Services
+        </button>
+        <button type="button" onClick={() => onSectionSelect("incidents")}>
+          Incidents
+        </button>
+        <button type="button" onClick={() => onSectionSelect("checks")}>
+          Checks
+        </button>
+        {isAdmin ? (
+          <button type="button" onClick={() => onSectionSelect("team")}>
+            Team
+          </button>
+        ) : null}
       </nav>
 
       <button className="secondary-button" type="button" onClick={onSignOut}>

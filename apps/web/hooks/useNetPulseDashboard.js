@@ -9,7 +9,8 @@ const emptyAuthForm = {
   name: "",
   email: "",
   password: "",
-  teamName: ""
+  teamName: "",
+  inviteToken: ""
 };
 
 const emptyServiceForm = {
@@ -44,6 +45,7 @@ function upsertById(items, nextItem) {
 export function useNetPulseDashboard() {
   const [auth, setAuth] = useState(null);
   const [authMode, setAuthMode] = useState("login");
+  const [registerMode, setRegisterMode] = useState("createTeam");
   const [authForm, setAuthForm] = useState(emptyAuthForm);
   const [teams, setTeams] = useState([]);
   const [currentTeamId, setCurrentTeamId] = useState("");
@@ -51,6 +53,7 @@ export function useNetPulseDashboard() {
   const [incidents, setIncidents] = useState([]);
   const [checks, setChecks] = useState([]);
   const [members, setMembers] = useState([]);
+  const [invitations, setInvitations] = useState([]);
   const [selectedServiceId, setSelectedServiceId] = useState("");
   const [serviceForm, setServiceForm] = useState(emptyServiceForm);
   const [incidentForm, setIncidentForm] = useState(emptyIncidentForm);
@@ -111,8 +114,10 @@ export function useNetPulseDashboard() {
   useEffect(() => {
     if (token && currentTeamId && isAdmin) {
       loadMembers(currentTeamId);
+      loadInvitations(currentTeamId);
     } else {
       setMembers([]);
+      setInvitations([]);
     }
   }, [token, currentTeamId, isAdmin]);
 
@@ -198,6 +203,11 @@ export function useNetPulseDashboard() {
     setMembers(data.members);
   }
 
+  async function loadInvitations(teamId) {
+    const data = await apiRequest(`/teams/${teamId}/invitations`, { token });
+    setInvitations(data.invitations);
+  }
+
   async function submitAuth(event) {
     event.preventDefault();
     setBusy(true);
@@ -207,7 +217,14 @@ export function useNetPulseDashboard() {
       const path = authMode === "register" ? "/auth/register" : "/auth/login";
       const body =
         authMode === "register"
-          ? authForm
+          ? {
+              name: authForm.name,
+              email: authForm.email,
+              password: authForm.password,
+              ...(registerMode === "joinInvite"
+                ? { inviteToken: authForm.inviteToken }
+                : { teamName: authForm.teamName })
+            }
           : { email: authForm.email, password: authForm.password };
       const data = await apiRequest(path, { method: "POST", body });
       const nextTeams = data.teams || [data.team];
@@ -218,6 +235,7 @@ export function useNetPulseDashboard() {
       setTeams(nextTeams);
       setCurrentTeamId(nextTeams[0]?.id || "");
       setAuthForm(emptyAuthForm);
+      setRegisterMode("createTeam");
       setMessage(authMode === "register" ? "Account created." : "Signed in.");
     } catch (error) {
       setMessage(error.message);
@@ -350,7 +368,7 @@ export function useNetPulseDashboard() {
     }
   }
 
-  async function addMember(event) {
+  async function inviteMember(event) {
     event.preventDefault();
 
     if (!isAdmin) {
@@ -362,15 +380,23 @@ export function useNetPulseDashboard() {
     setMessage("");
 
     try {
-      const data = await apiRequest(`/teams/${currentTeamId}/members`, {
+      const data = await apiRequest(`/teams/${currentTeamId}/invitations`, {
         method: "POST",
         token,
         body: memberForm
       });
 
-      setMembers((currentMembers) => upsertById(currentMembers, data.member));
+      if (data.member) {
+        setMembers((currentMembers) => upsertById(currentMembers, data.member));
+        setMessage("Existing user added to team.");
+      }
+
+      if (data.invitation) {
+        setInvitations((currentInvitations) => upsertById(currentInvitations, data.invitation));
+        setMessage(`Invitation created. Share code: ${data.invitation.token}`);
+      }
+
       setMemberForm(emptyMemberForm);
-      setMessage("Team member added.");
     } catch (error) {
       setMessage(error.message);
     } finally {
@@ -425,6 +451,7 @@ export function useNetPulseDashboard() {
     setServices([]);
     setIncidents([]);
     setChecks([]);
+    setInvitations([]);
     setSelectedServiceId("");
     setMessage("");
   }
@@ -444,6 +471,7 @@ export function useNetPulseDashboard() {
     currentTeamId,
     incidentForm,
     incidents,
+    invitations,
     isAdmin,
     memberForm,
     members,
@@ -462,12 +490,14 @@ export function useNetPulseDashboard() {
     setMemberForm,
     setSelectedServiceId,
     setServiceForm,
+    setRegisterMode,
     signOut,
     socketState,
     submitAuth,
     summary,
     teams,
     updateMemberRole,
-    addMember
+    registerMode,
+    inviteMember
   };
 }

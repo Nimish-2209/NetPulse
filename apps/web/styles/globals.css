@@ -102,6 +102,10 @@ a {
   box-shadow: 0 1px 4px rgba(23, 32, 42, 0.12);
 }
 
+.segmented-control.compact {
+  margin: 0;
+}
+
 .stack {
   display: grid;
   gap: 14px;
@@ -196,14 +200,20 @@ select:focus {
   gap: 8px;
 }
 
-.sidebar nav a {
+.sidebar nav button {
+  width: 100%;
+  border: 0;
   border-radius: 6px;
+  background: transparent;
   color: #e5e7eb;
   padding: 10px 12px;
+  text-align: left;
 }
 
-.sidebar nav a:hover {
+.sidebar nav button:hover,
+.sidebar nav button:focus {
   background: #1d2939;
+  outline: none;
 }
 
 .workspace {
@@ -315,7 +325,14 @@ small {
 .panel {
   display: grid;
   gap: 16px;
+  scroll-margin-top: 24px;
   padding: 18px;
+  transition: border-color 160ms ease, box-shadow 160ms ease;
+}
+
+.panel-highlight {
+  border-color: var(--primary);
+  box-shadow: 0 0 0 3px rgba(31, 111, 235, 0.16);
 }
 
 .section-heading {
@@ -459,6 +476,20 @@ td small {
 .check-list {
   display: grid;
   gap: 8px;
+  max-height: 320px;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  padding: 2px 6px 2px 2px;
+  scrollbar-gutter: stable;
+}
+
+.check-list::-webkit-scrollbar {
+  width: 8px;
+}
+
+.check-list::-webkit-scrollbar-thumb {
+  border-radius: 999px;
+  background: #c8d0dc;
 }
 
 .chart-frame {
@@ -483,6 +514,41 @@ td small {
 .member-list {
   display: grid;
   gap: 10px;
+}
+
+.invitation-list {
+  display: grid;
+  gap: 10px;
+  border: 1px dashed var(--line);
+  border-radius: 6px;
+  background: #f9fafc;
+  padding: 12px;
+}
+
+.invitation-list h4 {
+  margin: 0;
+}
+
+.invitation-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(220px, auto);
+  gap: 10px;
+  align-items: center;
+}
+
+.invitation-row span {
+  display: grid;
+  gap: 4px;
+  min-width: 0;
+}
+
+.invitation-row code {
+  overflow-x: auto;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  background: #fff;
+  padding: 8px;
+  font-size: 13px;
 }
 
 .member-row {
@@ -553,9 +619,14 @@ td small {
   .inline-form,
   .incident-form,
   .member-form,
+  .invitation-row,
   .member-row,
   .check-row {
     grid-template-columns: 1fr;
+  }
+
+  .check-list {
+    max-height: 260px;
   }
 
   .topbar,

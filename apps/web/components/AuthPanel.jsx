@@ -6,8 +6,10 @@ export default function AuthPanel({
   busy,
   message,
   onSubmit,
+  registerMode,
   setAuthForm,
-  setAuthMode
+  setAuthMode,
+  setRegisterMode
 }) {
   return (
     <main className="auth-page">
@@ -37,6 +39,23 @@ export default function AuthPanel({
         <form className="stack" onSubmit={onSubmit}>
           {authMode === "register" ? (
             <>
+              <div className="segmented-control compact">
+                <button
+                  className={registerMode === "createTeam" ? "active" : ""}
+                  type="button"
+                  onClick={() => setRegisterMode("createTeam")}
+                >
+                  Create team
+                </button>
+                <button
+                  className={registerMode === "joinInvite" ? "active" : ""}
+                  type="button"
+                  onClick={() => setRegisterMode("joinInvite")}
+                >
+                  Join invite
+                </button>
+              </div>
+
               <label>
                 Name
                 <input
@@ -45,14 +64,26 @@ export default function AuthPanel({
                   required
                 />
               </label>
-              <label>
-                Team
-                <input
-                  value={authForm.teamName}
-                  onChange={(event) => setAuthForm({ ...authForm, teamName: event.target.value })}
-                  placeholder="Connectify Demo Team"
-                />
-              </label>
+              {registerMode === "createTeam" ? (
+                <label>
+                  Team
+                  <input
+                    value={authForm.teamName}
+                    onChange={(event) => setAuthForm({ ...authForm, teamName: event.target.value })}
+                    placeholder="Connectify Demo Team"
+                  />
+                </label>
+              ) : (
+                <label>
+                  Invite code
+                  <input
+                    value={authForm.inviteToken}
+                    onChange={(event) => setAuthForm({ ...authForm, inviteToken: event.target.value })}
+                    placeholder="Paste invite code"
+                    required
+                  />
+                </label>
+              )}
             </>
           ) : null}
 
@@ -76,7 +107,11 @@ export default function AuthPanel({
           </label>
 
           <button className="primary-button" disabled={busy} type="submit">
-            {authMode === "register" ? "Create account" : "Log in"}
+            {authMode === "register"
+              ? registerMode === "joinInvite"
+                ? "Join team"
+                : "Create account"
+              : "Log in"}
           </button>
         </form>
 

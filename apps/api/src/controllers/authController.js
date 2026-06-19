@@ -1,6 +1,6 @@
 import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
-import { User, Team, TeamMember } from "../models/index.js";
+import { Invitation, User, Team, TeamMember } from "../models/index.js";
 import { slugify } from "../utils/slugify.js";
 
 function createToken(userId) {
@@ -16,25 +16,68 @@ function serializeUser(user) {
 }
 
 export async function register(req, res) {
-  const { name, email, password, teamName } = req.body;
+  const { name, email, password, teamName, inviteToken } = req.body;
 
   if (!name || !email || !password) {
     return res.status(400).json({ message: "Name, email, and password are required" });
   }
 
-  const existingUser = await User.findOne({ email });
+  const normalizedEmail = email.toLowerCase().trim();
+
+  const existingUser = await User.findOne({ email: normalizedEmail });
 
   if (existingUser) {
     return res.status(409).json({ message: "Email is already registered" });
+  }
+
+  let invitation;
+
+  if (inviteToken) {
+    invitation = await Invitation.findOne({
+      token: inviteToken.trim(),
+      acceptedAt: null
+    }).populate("teamId");
+
+    if (!invitation || invitation.expiresAt < new Date()) {
+      return res.status(400).json({ message: "Invitation is invalid or expired" });
+    }
+
+    if (invitation.email !== normalizedEmail) {
+      return res.status(400).json({ message: "Invitation email does not match registration email" });
+    }
   }
 
   const passwordHash = await bcrypt.hash(password, 12);
 
   const user = await User.create({
     name,
-    email,
+    email: normalizedEmail,
     passwordHash
   });
+
+  if (invitation) {
+    await TeamMember.create({
+      userId: user._id,
+      teamId: invitation.teamId._id,
+      role: invitation.role
+    });
+
+    invitation.acceptedAt = new Date();
+    await invitation.save();
+
+    const token = createToken(user._id);
+
+    return res.status(201).json({
+      token,
+      user: serializeUser(user),
+      team: {
+        id: invitation.teamId._id,
+        name: invitation.teamId.name,
+        slug: invitation.teamId.slug,
+        role: invitation.role
+      }
+    });
+  }
 
   const baseTeamName = teamName || `${name}'s Team`;
   const team = await Team.create({

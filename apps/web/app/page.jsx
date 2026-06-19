@@ -15,8 +15,10 @@ export default function HomePage() {
         busy={dashboard.busy}
         message={dashboard.message}
         onSubmit={dashboard.submitAuth}
+        registerMode={dashboard.registerMode}
         setAuthForm={dashboard.setAuthForm}
         setAuthMode={dashboard.setAuthMode}
+        setRegisterMode={dashboard.setRegisterMode}
       />
     );
   }
